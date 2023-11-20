@@ -30,25 +30,26 @@ public class Lotus {
         return no.toString(16);
     }
 
-    public static ArrayList<byte[]> AESEncr() throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    public static ArrayList<byte[]> AESEncr(String Gsigma, String M) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         ArrayList<byte[]> params = new ArrayList<>();
         SecureRandom secureRandom = new SecureRandom();
         Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");// create the cipher
-        byte[] key = new byte[256 / 8]; // generate the key
-        secureRandom.nextBytes(key);
-        System.out.println("This is key " + key.toString() + " " + key.length);
+        //byte[] key = new byte[256 / 8]; // generate the key
+        //secureRandom.nextBytes(key);
+        byte[] keysigma = Gsigma.getBytes();
+        System.out.println("This is key " + keysigma.toString() + " " + keysigma.length);
         byte[] nonce = new byte[96 / 8];//generate a nonce.
         secureRandom.nextBytes(nonce);
         byte[] iv = new byte[128 / 8];
         System.arraycopy(nonce, 0, iv, 0, nonce.length);
-        Key keySpec = new SecretKeySpec(key, "AES");
+        Key keySpec = new SecretKeySpec(keysigma, "AES");
         IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
         cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
 
-        byte[] plaintext = "Hello World CTR".getBytes(StandardCharsets.UTF_8);
+        byte[] plaintext = M.getBytes(StandardCharsets.UTF_8);
         byte[] ciphertext = cipher.doFinal(plaintext);
-        params.add(0, key);
+        params.add(0, keysigma);
         params.add(1, nonce);
         params.add(2, ciphertext);
         String ciphertextString = new String(ciphertext, StandardCharsets.UTF_8);
@@ -65,7 +66,6 @@ public class Lotus {
 // Use same nonce
         byte[] iv = new byte[128 / 8];
         System.arraycopy(nonce, 0, iv, 0, nonce.length);
-
 // And use same key to decrypt
         Key keySpec = new SecretKeySpec(key, "AES");
         IvParameterSpec ivSpec = new IvParameterSpec(iv);
@@ -177,7 +177,7 @@ public class Lotus {
         String h = SHA_512(sigma + csym.toString() + "10");
     }
 
-    public static void Encryption(String M, int l, int KeyLen) {
+    public static void Encryption(String M, int n, int l, int KeyLen) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         StringBuilder sigma = new StringBuilder();
         Random rand = new Random();
         for (int i = 0; i < l; i++) {
@@ -185,8 +185,14 @@ public class Lotus {
             sigma.append(randBit);
         }
         String Gsigma = SHA_512(sigma.toString() + "01");
-        BigInteger temp = new BigInteger(Gsigma, 16);
-        String newG = temp.toString(2);
+        ArrayList<byte[]> params = AESEncr(Gsigma, M);
+        byte[] csym = (params.get(2));
+        String csymdec = new String(csym, StandardCharsets.UTF_8);
+        String h = SHA_512(sigma+csymdec+"10");
+        ArrayList<Double> e1 = RandGausMatrix(3.0, n , 1);
+        ArrayList<Double> e2 = RandGausMatrix(3.0, n, 1);
+        ArrayList<Double> R = RandGausMatrix(3.0, l, 1);
+
     }
 
     public static void main(String[] args) throws Exception {
