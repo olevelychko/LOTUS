@@ -112,10 +112,18 @@ public class Lotus {
         return MatrixC;
     }
 
-    public static ArrayList<Double> SubstractMatrix(ArrayList<Double> A, ArrayList<Double> B, int l) {
+    public static ArrayList<Double> SubstractMatrix(ArrayList<Double> A, ArrayList<Double> B, int l, int oper) {
         ArrayList<Double> MatrixC = new ArrayList<>();
-        for (int i = 0; i < l * l; i++) {
-            MatrixC.add(A.get(i) - B.get(i));
+        if(oper==1) {
+            for (int i = 0; i < l; i++) {
+                MatrixC.add(A.get(i) - B.get(i));
+            }
+        }
+        else
+        {
+            for (int i = 0; i < l; i++) {
+                MatrixC.add(A.get(i) + B.get(i));
+            }
         }
         return MatrixC;
     }
@@ -134,7 +142,7 @@ public class Lotus {
         ArrayList<Double> R = RandGausMatrix(s, n, l);
         //System.out.println(R);
         ArrayList<Double> S = RandGausMatrix(s, n, l);
-        ArrayList<Double> P = (SubstractMatrix(R, MultiMatrix(A, S, n, l), l));
+        ArrayList<Double> P = (SubstractMatrix(R, MultiMatrix(A, S, n, l), l*l, 1));
         keyData.add(0, A);
         keyData.add(1, P);
         keyData.add(2, S);
@@ -143,7 +151,7 @@ public class Lotus {
 
     }
 
-    public static void Encapsulation(String M, int l, int KeyLen) {
+    public static ArrayList<ArrayList<Double>> Encapsulation(int q, int n, int l, int KeyLen, ArrayList<Double> A, ArrayList<Double> P) {
         StringBuilder sigma = new StringBuilder();
         StringBuilder K = new StringBuilder();
         Random rand = new Random();
@@ -151,7 +159,7 @@ public class Lotus {
             int randBit = rand.nextInt(2);
             sigma.append(randBit);
         }
-        for (int i = 0; i < l; i++) {
+        for (int i = 0; i < KeyLen; i++) {
             int randBit = rand.nextInt(2);
             K.append(randBit);
         }
@@ -164,13 +172,39 @@ public class Lotus {
         System.out.println("GsigmaNew = ");
         System.out.println(newG);
         StringBuilder csym = new StringBuilder();
-        for (int i = 0; i < l; i++) {
+        for (int i = 0; i < KeyLen; i++) {
             if (K.charAt(i) == newG.charAt(i)) csym.append(0);
             else csym.append(1);
         }
         System.out.println("csym");
         System.out.println(csym);
         String h = SHA_512(sigma + csym.toString() + "10");
+        ArrayList<Double> e1 = RandGausMatrix(3.0, 1, n);
+        ArrayList<Double> e2 = RandGausMatrix(3.0, 1, n);
+        ArrayList<Double> e3 = RandGausMatrix(3.0, 1, l);
+        ArrayList<Double> tempC1 = MultiMatrix(e1, A, 1, n);
+        tempC1 = SubstractMatrix(tempC1,e2,n,0);
+        //System.out.println(tempC1);
+        ArrayList<Double> tempC2 = MultiMatrix(e1, P, 1, l);
+        tempC2 = SubstractMatrix(tempC2,e3,l,0);
+        q = q/2;
+        ArrayList<Double> sigmaq = new ArrayList<>();
+        for (int i = 0; i < l; i++) {
+            if (sigma.charAt(i) == 0) sigmaq.add(0.0);
+            else sigmaq.add(Double.valueOf(q));
+        }
+        tempC2 = SubstractMatrix(tempC2,sigmaq,l,0);
+        System.out.println(tempC2);
+        ArrayList<Double> csymd = new ArrayList<>();
+        for(int i=0; i < csym.length();i++)
+        {
+            csymd.add(Double.valueOf(csym.charAt(i)-48));
+        }
+        ArrayList<ArrayList<Double>> encData = new ArrayList<>();
+        encData.add(0, tempC1);
+        encData.add(1, tempC2);
+        encData.add(2, csymd);
+        return encData;
     }
 
     public static void Encryption(String M, int n, int l, int KeyLen, ArrayList<Double> A, ArrayList<Double> S) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
@@ -198,6 +232,6 @@ public class Lotus {
         double s = 3.0;
         ArrayList<ArrayList<Double>> keyData = KeyGeneration(q, l, n, s);
         String M = "VelychkoMelnyk";
-        Encryption(M, n, l, KeyLen, keyData.get(0), keyData.get(1));
+        ArrayList<ArrayList<Double>> encData = Encapsulation(q, n, l, KeyLen, keyData.get(0), keyData.get(1));
     }
 }
