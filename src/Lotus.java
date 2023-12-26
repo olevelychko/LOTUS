@@ -12,6 +12,9 @@ import java.util.*;
 public class Lotus {
 
     private static MessageDigest md;
+    private static ArrayList<Double> e1 = RandGausMatrix(3.0, 1, 576);
+    private static ArrayList<Double> e2 = RandGausMatrix(3.0, 1, 576);
+    private static ArrayList<Double> e3 = RandGausMatrix(3.0, 1, 128);
 
     static {
         try {
@@ -179,9 +182,9 @@ public class Lotus {
         System.out.println("csym");
         System.out.println(csym);
         String h = SHA_512(sigma + csym.toString() + "10");
-        ArrayList<Double> e1 = RandGausMatrix(3.0, 1, n);
-        ArrayList<Double> e2 = RandGausMatrix(3.0, 1, n);
-        ArrayList<Double> e3 = RandGausMatrix(3.0, 1, l);
+        //ArrayList<Double> e1 = RandGausMatrix(3.0, 1, n);
+        //ArrayList<Double> e2 = RandGausMatrix(3.0, 1, n);
+        //ArrayList<Double> e3 = RandGausMatrix(3.0, 1, l);
         ArrayList<Double> tempC1 = MultiMatrix(e1, A, 1, n);
         tempC1 = SubstractMatrix(tempC1,e2,n,0);
         //System.out.println(tempC1);
@@ -212,18 +215,20 @@ public class Lotus {
         ArrayList<Double> sigmatemp = MultiMatrix(c1,S,1, l);
         ArrayList<Integer> sigmastr = new ArrayList<>();
         sigmatemp = SubstractMatrix(sigmatemp,c2,l,0);
+        double eq = q/4;
         for (int i = 0; i < sigmatemp.size(); i++)
         {
-            if((sigmatemp.get(i) <= (q/4)) && (sigmatemp.get(i) >= (-q/4))) sigmastr.add(0);
+            if((sigmatemp.get(i) <= (eq)) && (sigmatemp.get(i) >= (-eq))) sigmastr.add(0);
             else sigmastr.add(1);
         }
+        System.out.println("sigmastr = " + sigmastr);
         String Gsigma = SHA_512(sigmastr + "01");
         BigInteger temp = new BigInteger(Gsigma, 16);
         String newG = temp.toString(2);
         String htemp = SHA_512(sigmastr + csym.toString() + "10");
-        ArrayList<Double> e1 = RandGausMatrix(3.0, 1, n);
-        ArrayList<Double> e2 = RandGausMatrix(3.0, 1, n);
-        ArrayList<Double> e3 = RandGausMatrix(3.0, 1, l);
+        //ArrayList<Double> e1 = RandGausMatrix(3.0, 1, n);
+        //ArrayList<Double> e2 = RandGausMatrix(3.0, 1, n);
+        //ArrayList<Double> e3 = RandGausMatrix(3.0, 1, l);
         ArrayList<Double> tempC1 = MultiMatrix(e1, A, 1, n);
         tempC1 = SubstractMatrix(tempC1,e2,n,0);
         //System.out.println(tempC1);
@@ -240,6 +245,36 @@ public class Lotus {
         System.out.println(tempC1);
         System.out.println("new c2 = ");
         System.out.println(tempC2);
+        boolean c1fl = true;
+        boolean c2fl = true;
+        for(int i = 0; i < tempC1.size(); i++)
+        {
+            if(!Objects.equals(c1.get(i), tempC1.get(i)))
+            {
+                c1fl = false;
+                break;
+            }
+        }
+        for (int i = 0; i < tempC2.size(); i++)
+        {
+            if(!Objects.equals(c2.get(i), tempC2.get(i)))
+            {
+                c2fl = false;
+                break;
+            }
+        }
+        if(c1fl && c2fl)
+        {
+            StringBuilder K = new StringBuilder();
+            for (int i = 0; i < Gsigma.length(); i++) {
+                if (newG.charAt(i) == csym.toString().charAt(i)) K.append(0);
+                else K.append(1);
+            }
+            System.out.println("K = ");
+            System.out.println(K);
+            System.out.println("newG = ");
+            System.out.println(newG);
+        }
     }
 
     public static void Encryption(String M, int n, int l, int KeyLen, ArrayList<Double> A, ArrayList<Double> S) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
