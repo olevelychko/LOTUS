@@ -207,6 +207,41 @@ public class Lotus {
         return encData;
     }
 
+    public static void Decapsulation(ArrayList<Double> S, ArrayList<Double> c1, ArrayList<Double> c2, ArrayList<Double> csym, int q, int l, int n, ArrayList<Double> A, ArrayList<Double> P)
+    {
+        ArrayList<Double> sigmatemp = MultiMatrix(c1,S,1, l);
+        ArrayList<Integer> sigmastr = new ArrayList<>();
+        sigmatemp = SubstractMatrix(sigmatemp,c2,l,0);
+        for (int i = 0; i < sigmatemp.size(); i++)
+        {
+            if((sigmatemp.get(i) <= (q/4)) && (sigmatemp.get(i) >= (-q/4))) sigmastr.add(0);
+            else sigmastr.add(1);
+        }
+        String Gsigma = SHA_512(sigmastr + "01");
+        BigInteger temp = new BigInteger(Gsigma, 16);
+        String newG = temp.toString(2);
+        String htemp = SHA_512(sigmastr + csym.toString() + "10");
+        ArrayList<Double> e1 = RandGausMatrix(3.0, 1, n);
+        ArrayList<Double> e2 = RandGausMatrix(3.0, 1, n);
+        ArrayList<Double> e3 = RandGausMatrix(3.0, 1, l);
+        ArrayList<Double> tempC1 = MultiMatrix(e1, A, 1, n);
+        tempC1 = SubstractMatrix(tempC1,e2,n,0);
+        //System.out.println(tempC1);
+        ArrayList<Double> tempC2 = MultiMatrix(e1, P, 1, l);
+        tempC2 = SubstractMatrix(tempC2,e3,l,0);
+        q = q/2;
+        ArrayList<Double> sigmaq = new ArrayList<>();
+        for (int i = 0; i < l; i++) {
+            if (sigmastr.toString().charAt(i) == 0) sigmaq.add(0.0);
+            else sigmaq.add(Double.valueOf(q));
+        }
+        tempC2 = SubstractMatrix(tempC2,sigmaq,l,0);
+        System.out.println("new c1 = " );
+        System.out.println(tempC1);
+        System.out.println("new c2 = ");
+        System.out.println(tempC2);
+    }
+
     public static void Encryption(String M, int n, int l, int KeyLen, ArrayList<Double> A, ArrayList<Double> S) throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         StringBuilder sigma = new StringBuilder();
         Random rand = new Random();
@@ -233,5 +268,10 @@ public class Lotus {
         ArrayList<ArrayList<Double>> keyData = KeyGeneration(q, l, n, s);
         String M = "VelychkoMelnyk";
         ArrayList<ArrayList<Double>> encData = Encapsulation(q, n, l, KeyLen, keyData.get(0), keyData.get(1));
+        System.out.println("c1 = ");
+        System.out.println(encData.get(0));
+        System.out.println("c2 = ");
+        System.out.println(encData.get(1));
+        Decapsulation(keyData.get(2), encData.get(0),encData.get(1), encData.get(2), q, l, n, keyData.get(0), keyData.get(1));
     }
 }
